@@ -528,7 +528,7 @@ def test_uvloop_cannot_never_called_with_create_server(caplog, monkeypatch):
     )
 
     counter = Counter([(r[1], r[2]) for r in caplog.record_tuples])
-    modified = sum(1 for app in apps if app.config.USE_UVLOOP is not _default)
+    modified = sum(app.config.USE_UVLOOP is not _default for app in apps)
 
     assert counter[(logging.WARNING, message)] == modified
 

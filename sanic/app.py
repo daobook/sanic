@@ -309,7 +309,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         if attach_to == "request":
             if middleware not in self.request_middleware:
                 self.request_middleware.append(middleware)
-        if attach_to == "response":
+        elif attach_to == "response":
             if middleware not in self.response_middleware:
                 self.response_middleware.appendleft(middleware)
         return middleware
@@ -332,14 +332,13 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             defaults to "request"
         :type attach_to: str, optional
         """
-        if attach_to == "request":
-            for _rn in route_names:
+        for _rn in route_names:
+            if attach_to == "request":
                 if _rn not in self.named_request_middleware:
                     self.named_request_middleware[_rn] = deque()
                 if middleware not in self.named_request_middleware[_rn]:
                     self.named_request_middleware[_rn].append(middleware)
-        if attach_to == "response":
-            for _rn in route_names:
+            elif attach_to == "response":
                 if _rn not in self.named_response_middleware:
                     self.named_response_middleware[_rn] = deque()
                 if middleware not in self.named_response_middleware[_rn]:
@@ -441,13 +440,12 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
     ):
         signal = self.signal_router.name_index.get(event)
         if not signal:
-            if self.config.EVENT_AUTOREGISTER:
-                self.signal_router.reset()
-                self.add_signal(None, event)
-                signal = self.signal_router.name_index[event]
-                self.signal_router.finalize()
-            else:
+            if not self.config.EVENT_AUTOREGISTER:
                 raise NotFound("Could not find signal %s" % event)
+            self.signal_router.reset()
+            self.add_signal(None, event)
+            signal = self.signal_router.name_index[event]
+            self.signal_router.finalize()
         return await wait_for(signal.ctx.event.wait(), timeout=timeout)
 
     def enable_websocket(self, enable=True):
@@ -575,8 +573,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
             view_name = f"{self.name}.{view_name}"
 
         if view_name.endswith(".static"):
-            name = kwargs.pop("name", None)
-            if name:
+            if name := kwargs.pop("name", None):
                 view_name = view_name.replace("static", name)
             kw.update(name=view_name)
 
@@ -643,11 +640,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
         if external:
             if not scheme:
-                if ":" in netloc[:8]:
-                    scheme = netloc[:8].split(":", 1)[0]
-                else:
-                    scheme = "http"
-
+                scheme = netloc[:8].split(":", 1)[0] if ":" in netloc[:8] else "http"
             if "://" in netloc[:8]:
                 netloc = netloc.split("://", 1)[-1]
 
@@ -709,7 +702,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
 
     async def handle_exception(
         self, request: Request, exception: BaseException
-    ):  # no cov
+    ):    # no cov
         """
         A handler that catches specific exceptions and outputs a response.
 
@@ -804,9 +797,8 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                     request.stream.respond(response)
                 await response.send(end_stream=True)
                 raise
-        else:
-            if request.stream:
-                response = request.stream.response
+        elif request.stream:
+            response = request.stream.response
 
         # Marked for cleanup and DRY with handle_request/handle_exception
         # when ResponseStream is no longer supporder
@@ -836,7 +828,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                 f"Invalid response type {response!r} (need HTTPResponse)"
             )
 
-    async def handle_request(self, request: Request):  # no cov
+    async def handle_request(self, request: Request):    # no cov
         """Take a request from the HTTP Server and return a response object
         to be sent back The HTTP Server only expects a response object, so
         exception handling must be done here
@@ -957,12 +949,11 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                     },
                 )
                 await response.eof()
-            else:
-                if not hasattr(handler, "is_websocket"):
-                    raise ServerError(
-                        f"Invalid response type {response!r} "
-                        "(need HTTPResponse)"
-                    )
+            elif not hasattr(handler, "is_websocket"):
+                raise ServerError(
+                    f"Invalid response type {response!r} "
+                    "(need HTTPResponse)"
+                )
 
         except CancelledError:
             raise
@@ -1085,8 +1076,7 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
         named_middleware = self.named_response_middleware.get(
             request_name, deque()
         )
-        applicable_middleware = self.response_middleware + named_middleware
-        if applicable_middleware:
+        if applicable_middleware := self.response_middleware + named_middleware:
             for middleware in applicable_middleware:
                 await self.dispatch(
                     "http.middleware.before",
@@ -1107,10 +1097,11 @@ class Sanic(BaseSanic, RunnerMixin, metaclass=TouchUpMeta):
                     inline=True,
                     context={
                         "request": request,
-                        "response": _response if _response else response,
+                        "response": _response or response,
                     },
                     condition={"attach_to": "response"},
                 )
+
 
                 if _response:
                     response = _response

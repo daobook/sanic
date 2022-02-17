@@ -522,8 +522,7 @@ def exception_response(
                     # to the original default
                     for accept in acceptable:
                         mtype = f"{accept.type_}/{accept.subtype}"
-                        maybe = RENDERERS_BY_CONTENT_TYPE.get(mtype)
-                        if maybe:
+                        if maybe := RENDERERS_BY_CONTENT_TYPE.get(mtype):
                             renderer = maybe
                             break
                     else:

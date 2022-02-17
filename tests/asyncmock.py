@@ -26,7 +26,7 @@ class AsyncMock(Mock):
         return self().__await__()
 
     def assert_awaited_once(self):
-        if not self.await_count == 1:
+        if self.await_count != 1:
             msg = (
                 f"Expected to have been awaited once."
                 f" Awaited {self.await_count} times."

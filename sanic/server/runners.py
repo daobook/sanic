@@ -100,9 +100,7 @@ def serve(
         unix=unix,
         **protocol_kwargs,
     )
-    asyncio_server_kwargs = (
-        asyncio_server_kwargs if asyncio_server_kwargs else {}
-    )
+    asyncio_server_kwargs = asyncio_server_kwargs or {}
     # UNIX sockets are always bound by us (to preserve semantics between modes)
     if unix:
         sock = bind_unix_socket(unix, backlog=backlog)
@@ -140,7 +138,6 @@ def serve(
         signal_func(SIGINT, SIG_IGN)
         os.environ["SANIC_WORKER_PROCESS"] = "true"
 
-    # Register signals for graceful termination
     if register_sys_signals:
         if OS_IS_WINDOWS:
             ctrlc_workaround_for_windows(app)
@@ -176,7 +173,7 @@ def serve(
         start_shutdown: float = 0
         while connections and (start_shutdown < graceful):
             loop.run_until_complete(asyncio.sleep(0.1))
-            start_shutdown = start_shutdown + 0.1
+            start_shutdown += 0.1
 
         if sys.version_info > (3, 7):
             app.shutdown_tasks(graceful - start_shutdown)

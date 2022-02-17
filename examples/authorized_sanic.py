@@ -10,19 +10,13 @@ app = Sanic("Example")
 
 
 def check_request_for_authorization_status(request):
-    # Note: Define your check, for instance cookie, session.
-    flag = True
-    return flag
+    return True
 
 
 def authorized(f):
     @wraps(f)
     async def decorated_function(request, *args, **kwargs):
-        # run some method that checks the request
-        # for the client's authorization status
-        is_authorized = check_request_for_authorization_status(request)
-
-        if is_authorized:
+        if is_authorized := check_request_for_authorization_status(request):
             # the user is authorized.
             # run the handler method and return the response
             response = await f(request, *args, **kwargs)

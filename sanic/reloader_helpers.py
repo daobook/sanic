@@ -19,8 +19,7 @@ def _iter_module_files():
     for module in list(sys.modules.values()):
         if module is None:
             continue
-        filename = getattr(module, "__file__", None)
-        if filename:
+        if filename := getattr(module, "__file__", None):
             old = None
             while not os.path.isfile(filename):
                 old = filename

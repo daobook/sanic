@@ -37,9 +37,9 @@ class WebSocketConnection:
         message: Dict[str, Union[str, bytes]] = {"type": "websocket.send"}
 
         if isinstance(data, bytes):
-            message.update({"bytes": data})
+            message["bytes"] = data
         else:
-            message.update({"text": str(data)})
+            message["text"] = str(data)
 
         await self._send(message)
 
@@ -48,9 +48,6 @@ class WebSocketConnection:
 
         if message["type"] == "websocket.receive":
             return message["text"]
-        elif message["type"] == "websocket.disconnect":
-            pass
-
         return None
 
     receive = recv

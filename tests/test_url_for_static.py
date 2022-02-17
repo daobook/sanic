@@ -12,8 +12,7 @@ def static_file_directory():
     """The static directory to serve"""
     current_file = inspect.getfile(inspect.currentframe())
     current_directory = os.path.dirname(os.path.abspath(current_file))
-    static_directory = os.path.join(current_directory, "static")
-    return static_directory
+    return os.path.join(current_directory, "static")
 
 
 def get_file_path(static_file_directory, file_name):
@@ -124,7 +123,7 @@ def test_static_directory(file_name, base_uri, static_file_directory):
     app = Sanic("base")
 
     app.static(base_uri, static_file_directory)
-    base_uri2 = base_uri + "/2"
+    base_uri2 = f'{base_uri}/2'
     app.static(base_uri2, static_file_directory, name="uploads")
 
     uri = app.url_for("static", name="static", filename=file_name)
@@ -134,11 +133,11 @@ def test_static_directory(file_name, base_uri, static_file_directory):
     assert response.status == 200
     assert response.body == get_file_content(static_file_directory, file_name)
 
-    uri2 = app.url_for("static", name="static", filename="/" + file_name)
+    uri2 = app.url_for("static", name="static", filename=f'/{file_name}')
     uri3 = app.url_for("static", filename=file_name)
-    uri4 = app.url_for("static", filename="/" + file_name)
+    uri4 = app.url_for("static", filename=f'/{file_name}')
     uri5 = app.url_for("static", name="uploads", filename=file_name)
-    uri6 = app.url_for("static", name="uploads", filename="/" + file_name)
+    uri6 = app.url_for("static", name="uploads", filename=f'/{file_name}')
 
     assert uri == uri2
     assert uri2 == uri3
@@ -159,15 +158,17 @@ def test_static_directory(file_name, base_uri, static_file_directory):
         "static", name="test_bp_static.static", filename=file_name
     )
     uri2 = app.url_for(
-        "static", name="test_bp_static.static", filename="/" + file_name
+        "static", name="test_bp_static.static", filename=f'/{file_name}'
     )
+
 
     uri4 = app.url_for(
         "static", name="test_bp_static.uploads", filename=file_name
     )
     uri5 = app.url_for(
-        "static", name="test_bp_static.uploads", filename="/" + file_name
+        "static", name="test_bp_static.uploads", filename=f'/{file_name}'
     )
+
 
     assert uri == f"/bp{base_uri}/{file_name}"
     assert uri == uri2

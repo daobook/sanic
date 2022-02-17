@@ -98,9 +98,12 @@ class WebsocketFrameAssembler:
         received, :meth:`get` returns ``None``.
         """
         async with self.read_mutex:
-            if timeout is not None and timeout <= 0:
-                if not self.message_complete.is_set():
-                    return None
+            if (
+                timeout is not None
+                and timeout <= 0
+                and not self.message_complete.is_set()
+            ):
+                return None
             if self.get_in_progress:
                 # This should be guarded against with the read_mutex,
                 # exception is only here as a failsafe
@@ -249,9 +252,7 @@ class WebsocketFrameAssembler:
                 self.decoder = UTF8Decoder(errors="strict")
             elif frame.opcode is Opcode.BINARY:
                 self.decoder = None
-            elif frame.opcode is Opcode.CONT:
-                pass
-            else:
+            elif frame.opcode is not Opcode.CONT:
                 # Ignore control frames.
                 return
             data: Data

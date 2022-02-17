@@ -447,19 +447,18 @@ class Request:
             strict_parsing,
             encoding,
             errors,
-        ) not in self.parsed_args:
-            if self.query_string:
-                self.parsed_args[
-                    (keep_blank_values, strict_parsing, encoding, errors)
-                ] = RequestParameters(
-                    parse_qs(
-                        qs=self.query_string,
-                        keep_blank_values=keep_blank_values,
-                        strict_parsing=strict_parsing,
-                        encoding=encoding,
-                        errors=errors,
-                    )
+        ) not in self.parsed_args and self.query_string:
+            self.parsed_args[
+                (keep_blank_values, strict_parsing, encoding, errors)
+            ] = RequestParameters(
+                parse_qs(
+                    qs=self.query_string,
+                    keep_blank_values=keep_blank_values,
+                    strict_parsing=strict_parsing,
+                    encoding=encoding,
+                    errors=errors,
                 )
+            )
 
         return self.parsed_args[
             (keep_blank_values, strict_parsing, encoding, errors)
@@ -506,17 +505,16 @@ class Request:
             strict_parsing,
             encoding,
             errors,
-        ) not in self.parsed_not_grouped_args:
-            if self.query_string:
-                self.parsed_not_grouped_args[
-                    (keep_blank_values, strict_parsing, encoding, errors)
-                ] = parse_qsl(
-                    qs=self.query_string,
-                    keep_blank_values=keep_blank_values,
-                    strict_parsing=strict_parsing,
-                    encoding=encoding,
-                    errors=errors,
-                )
+        ) not in self.parsed_not_grouped_args and self.query_string:
+            self.parsed_not_grouped_args[
+                (keep_blank_values, strict_parsing, encoding, errors)
+            ] = parse_qsl(
+                qs=self.query_string,
+                keep_blank_values=keep_blank_values,
+                strict_parsing=strict_parsing,
+                encoding=encoding,
+                errors=errors,
+            )
         return self.parsed_not_grouped_args[
             (keep_blank_values, strict_parsing, encoding, errors)
         ]
@@ -679,8 +677,7 @@ class Request:
         :return: the first matching host found, or empty string
         :rtype: str
         """
-        server_name = self.app.config.get("SERVER_NAME")
-        if server_name:
+        if server_name := self.app.config.get("SERVER_NAME"):
             return server_name.split("//", 1)[-1].split("/", 1)[0]
         return str(
             self.forwarded.get("host") or self.headers.getone("host", "")
@@ -804,7 +801,7 @@ def parse_multipart_form(body, boundary):
         field_name = None
         line_index = 2
         line_end_index = 0
-        while not line_end_index == -1:
+        while line_end_index != -1:
             line_end_index = form_part.find(b"\r\n", line_index)
             form_line = form_part[line_index:line_end_index].decode("utf-8")
             line_index = line_end_index + 2
@@ -814,7 +811,7 @@ def parse_multipart_form(body, boundary):
 
             colon_index = form_line.index(":")
             idx = colon_index + 2
-            form_header_field = form_line[0:colon_index].lower()
+            form_header_field = form_line[:colon_index].lower()
             form_header_value, form_parameters = parse_content_header(
                 form_line[idx:]
             )

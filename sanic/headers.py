@@ -23,7 +23,7 @@ _firefox_quote_escape = re.compile(r'\\"(?!; |\s*$)')
 _ipv6 = "(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}"
 _ipv6_re = re.compile(_ipv6)
 _host_re = re.compile(
-    r"((?:\[" + _ipv6 + r"\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?"
+    f'((?:\\[{_ipv6}' + r"\])|[a-zA-Z0-9.\-]{1,253})(?::(\d{1,5}))?"
 )
 
 # RFC's quoted-pair escapes are mostly ignored by browsers. Chrome, Firefox and
@@ -57,13 +57,11 @@ class MediaType(str):
         if self.match(other):
             return True
 
-        other_is_wildcard = (
+        return (
             other.is_wildcard
             if isinstance(other, MediaType)
             else self.check_if_wildcard(other)
         )
-
-        return other_is_wildcard
 
     def match(self, other):
         other_value = other.value if isinstance(other, MediaType) else other
@@ -383,13 +381,10 @@ def parse_accept(accept: str) -> AcceptContainer:
     https://datatracker.ietf.org/doc/html/rfc7231#section-5.3.2
     """
     media_types = accept.split(",")
-    accept_list: List[Accept] = []
+    accept_list: List[Accept] = [
+        Accept.parse(mtype) for mtype in media_types if mtype
+    ]
 
-    for mtype in media_types:
-        if not mtype:
-            continue
-
-        accept_list.append(Accept.parse(mtype))
 
     return AcceptContainer(
         sorted(accept_list, key=_sort_accept_value, reverse=True)

@@ -592,7 +592,7 @@ def test_streaming_echo():
 
         async def read_chunk():
             nonlocal buffer
-            while not b"\r\n" in buffer:
+            while b"\r\n" not in buffer:
                 data = await reader.read(4096)
                 assert data
                 buffer += data

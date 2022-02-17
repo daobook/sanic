@@ -54,10 +54,7 @@ class WebSocketProtocol(HttpProtocol):
             super().data_received(data)
 
     def eof_received(self) -> Optional[bool]:
-        if self.websocket is not None:
-            return self.websocket.eof_received()
-        else:
-            return False
+        return self.websocket.eof_received() if self.websocket is not None else False
 
     def close(self, timeout: Optional[float] = None):
         # Called by HttpProtocol at the end of connection_task
@@ -71,17 +68,14 @@ class WebSocketProtocol(HttpProtocol):
             super().close()
 
     def close_if_idle(self):
-        # Called by Sanic Server when shutting down
-        # If we've upgraded to websocket, shut it down
-        if self.websocket is not None:
-            if self.websocket.connection.state in (CLOSING, CLOSED):
-                return True
-            elif self.websocket.loop is not None:
-                self.websocket.loop.create_task(self.websocket.close(1001))
-            else:
-                self.websocket.end_connection(1001)
-        else:
+        if self.websocket is None:
             return super().close_if_idle()
+        if self.websocket.connection.state in (CLOSING, CLOSED):
+            return True
+        elif self.websocket.loop is not None:
+            self.websocket.loop.create_task(self.websocket.close(1001))
+        else:
+            self.websocket.end_connection(1001)
 
     async def websocket_handshake(
         self, request, subprotocols: Optional[Sequence[str]] = None
@@ -93,13 +87,9 @@ class WebSocketProtocol(HttpProtocol):
                 # but ServerConnection needs a list
                 subprotocols = cast(
                     Optional[Sequence[Subprotocol]],
-                    list(
-                        [
-                            Subprotocol(subprotocol)
-                            for subprotocol in subprotocols
-                        ]
-                    ),
+                    [Subprotocol(subprotocol) for subprotocol in subprotocols],
                 )
+
             ws_conn = ServerConnection(
                 max_size=self.websocket_max_size,
                 subprotocols=subprotocols,
@@ -113,21 +103,20 @@ class WebSocketProtocol(HttpProtocol):
                 "See server log for more information.\n"
             )
             raise ServerError(msg, status_code=500)
-        if 100 <= resp.status_code <= 299:
-            first_line = (
-                f"HTTP/1.1 {resp.status_code} {resp.reason_phrase}\r\n"
-            ).encode()
-            rbody = bytearray(first_line)
-            rbody += (
-                "".join([f"{k}: {v}\r\n" for k, v in resp.headers.items()])
-            ).encode()
-            rbody += b"\r\n"
-            if resp.body is not None:
-                rbody += resp.body
-                rbody += b"\r\n\r\n"
-            await super().send(rbody)
-        else:
+        if not 100 <= resp.status_code <= 299:
             raise ServerError(resp.body, resp.status_code)
+        first_line = (
+            f"HTTP/1.1 {resp.status_code} {resp.reason_phrase}\r\n"
+        ).encode()
+        rbody = bytearray(first_line)
+        rbody += (
+            "".join([f"{k}: {v}\r\n" for k, v in resp.headers.items()])
+        ).encode()
+        rbody += b"\r\n"
+        if resp.body is not None:
+            rbody += resp.body
+            rbody += b"\r\n\r\n"
+        await super().send(rbody)
         self.websocket = WebsocketImplProtocol(
             ws_conn,
             ping_interval=self.websocket_ping_interval,

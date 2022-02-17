@@ -131,10 +131,9 @@ class SignalRouter(BaseRouter):
         except NotFound as e:
             if fail_not_found:
                 raise e
-            else:
-                if self.ctx.app.debug and self.ctx.app.state.verbosity >= 1:
-                    error_logger.warning(str(e))
-                return None
+            if self.ctx.app.debug and self.ctx.app.state.verbosity >= 1:
+                error_logger.warning(str(e))
+            return None
 
         events = [signal.ctx.event for signal in group]
         for signal_event in events:

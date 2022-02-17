@@ -19,10 +19,8 @@ from sanic.response import text
 def dl_to_dict(soup, css_class):
     keys, values = [], []
     for dl in soup.find_all("dl", {"class": css_class}):
-        for dt in dl.find_all("dt"):
-            keys.append(dt.text.strip())
-        for dd in dl.find_all("dd"):
-            values.append(dd.text.strip())
+        keys.extend(dt.text.strip() for dt in dl.find_all("dt"))
+        values.extend(dd.text.strip() for dd in dl.find_all("dd"))
     return dict(zip(keys, values))
 
 

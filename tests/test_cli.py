@@ -26,10 +26,14 @@ def capture(command):
 
 
 def starting_line(lines):
-    for idx, line in enumerate(lines):
-        if line.strip().startswith(b"Sanic v"):
-            return idx
-    return 0
+    return next(
+        (
+            idx
+            for idx, line in enumerate(lines)
+            if line.strip().startswith(b"Sanic v")
+        ),
+        0,
+    )
 
 
 def read_app_info(lines):
