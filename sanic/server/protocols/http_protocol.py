@@ -79,7 +79,7 @@ class HttpProtocol(SanicProtocol, metaclass=TouchUpMeta):
         self.keep_alive_timeout = self.app.config.KEEP_ALIVE_TIMEOUT
         self.request_max_size = self.app.config.REQUEST_MAX_SIZE
         self.request_class = self.app.request_class or Request
-        self.state = state if state else {}
+        self.state = state or {}
         if "requests_count" not in self.state:
             self.state["requests_count"] = 0
         self._exception = None

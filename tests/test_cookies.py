@@ -81,8 +81,7 @@ def test_http2_cookies(app):
     @app.route("/")
     async def handler(request):
         cookie_value = request.cookies["test"]
-        response = text(f"Cookies are: {cookie_value}")
-        return response
+        return text(f"Cookies are: {cookie_value}")
 
     headers = {"cookie": "test=working!"}
     request, response = app.test_client.get("/", headers=headers)

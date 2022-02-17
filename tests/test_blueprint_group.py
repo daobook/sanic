@@ -58,12 +58,10 @@ def test_bp_group_with_additional_route_params(app: Sanic):
     @blueprint_group.middleware("request")
     def authenticate_request(request: Request):
         global AUTH
-        auth = request.headers.get("authorization")
-        if auth:
-            # Dummy auth check. We can have anything here and it's fine.
-            if AUTH not in auth:
-                return text("Unauthorized", status=401)
-        else:
+        if not (auth := request.headers.get("authorization")):
+            return text("Unauthorized", status=401)
+        # Dummy auth check. We can have anything here and it's fine.
+        if AUTH not in auth:
             return text("Unauthorized", status=401)
 
     @blueprint_group.middleware("response")

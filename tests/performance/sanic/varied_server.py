@@ -10,7 +10,7 @@ from sanic.response import json, text
 currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe()))
 )
-sys.path.insert(0, currentdir + "/../../../")
+sys.path.insert(0, f'{currentdir}/../../../')
 
 
 app = Sanic("test")

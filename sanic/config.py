@@ -107,12 +107,11 @@ class Config(dict, metaclass=DescriptorMeta):
         if keep_alive is not None:
             self.KEEP_ALIVE = keep_alive
 
-        if env_prefix != SANIC_PREFIX:
-            if env_prefix:
-                self.load_environment_vars(env_prefix)
-        else:
+        if env_prefix == SANIC_PREFIX:
             self.load_environment_vars(SANIC_PREFIX)
 
+        elif env_prefix:
+            self.load_environment_vars(env_prefix)
         self._configure_header_size()
         self._check_error_format()
         self._init = True
@@ -132,10 +131,9 @@ class Config(dict, metaclass=DescriptorMeta):
     def update(self, *other, **kwargs) -> None:
         kwargs.update({k: v for item in other for k, v in dict(item).items()})
         setters: Dict[str, Any] = {
-            k: kwargs.pop(k)
-            for k in {**kwargs}.keys()
-            if k in self.__class__.__setters__
+            k: kwargs.pop(k) for k in {**kwargs} if k in self.__class__.__setters__
         }
+
 
         for key, value in setters.items():
             try:

@@ -1055,7 +1055,7 @@ def test_unicode_routes(app):
 
     @app.route("/overload/<param>", methods=["GET"], unquote=True)
     async def handler2(request, param):
-        return text("OK2 " + param)
+        return text(f'OK2 {param}')
 
     request, response = app.test_client.get("/overload/你好")
     assert response.text == "OK2 你好"

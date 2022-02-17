@@ -52,9 +52,7 @@ class ErrorHandler:
     @property
     def fallback(self):  # no cov
         # This is for backwards compat and can be removed in v22.6
-        if self._fallback is _default:
-            return DEFAULT_FORMAT
-        return self._fallback
+        return DEFAULT_FORMAT if self._fallback is _default else self._fallback
 
     @fallback.setter
     def fallback(self, value: str):  # no cov
@@ -161,8 +159,7 @@ class ErrorHandler:
 
         for name in (route_name, None):
             exception_key = (exception_class, name)
-            handler = self.cached_handlers.get(exception_key)
-            if handler:
+            if handler := self.cached_handlers.get(exception_key):
                 return handler
 
         for name in (route_name, None):
@@ -178,8 +175,7 @@ class ErrorHandler:
                 if ancestor is BaseException:
                     break
         self.cached_handlers[(exception_class, route_name)] = None
-        handler = None
-        return handler
+        return None
 
     _lookup = _full_lookup
 
@@ -313,11 +309,10 @@ class ContentRangeHandler:
             else:
                 # this case represents `Content-Range: bytes 5-`
                 self.end = self.total - 1
-        else:
-            if self.start is None:
-                # this case represents `Content-Range: bytes -5`
-                self.start = self.total - self.end
-                self.end = self.total - 1
+        elif self.start is None:
+            # this case represents `Content-Range: bytes -5`
+            self.start = self.total - self.end
+            self.end = self.total - 1
         if self.start >= self.end:
             raise ContentRangeError(
                 "Invalid for Content Range parameters", self

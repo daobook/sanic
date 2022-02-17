@@ -123,16 +123,12 @@ class Router(BaseRouter):
             unquote=unquote,
         )
 
-        if isinstance(host, str):
-            hosts = [host]
-        else:
-            hosts = host or [None]  # type: ignore
-
+        hosts = [host] if isinstance(host, str) else host or [None]
         routes = []
 
         for host in hosts:
             if host:
-                params.update({"requirements": {"host": host}})
+                params["requirements"] = {"host": host}
 
             route = super().add(**params)  # type: ignore
             route.ctx.ignore_body = ignore_body
@@ -215,8 +211,7 @@ class Router(BaseRouter):
         for part in uri.split("/"):
             if part.startswith("<") and ":" not in part:
                 name = part[1:-1]
-                annotation = mapping.get(name)
-                if annotation:
+                if annotation := mapping.get(name):
                     part = f"<{name}:{annotation}>"
             reconstruction.append(part)
         return "/".join(reconstruction)

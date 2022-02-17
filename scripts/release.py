@@ -110,13 +110,10 @@ def _get_new_version(
     current_version: str = None,
     micro_release: bool = False,
 ):
-    if micro_release:
-        if current_version:
-            return _change_micro_version(current_version)
-        elif config_file:
-            return _change_micro_version(_fetch_current_version(config_file))
-        else:
-            return _fetch_default_calendar_release_version()
+    if micro_release and current_version:
+        return _change_micro_version(current_version)
+    elif micro_release and config_file:
+        return _change_micro_version(_fetch_current_version(config_file))
     else:
         return _fetch_default_calendar_release_version()
 
@@ -125,10 +122,7 @@ def _get_current_tag(git_command_name="get_tag"):
     global GIT_COMMANDS
     command = GIT_COMMANDS.get(git_command_name)
     out, err, ret = _run_shell_command(command)
-    if str(out):
-        return str(out).split("\n")[0]
-    else:
-        return None
+    return str(out).split("\n")[0] if str(out) else None
 
 
 def _update_release_version_for_sanic(

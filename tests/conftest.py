@@ -98,10 +98,7 @@ class RouteStringGenerator:
     @staticmethod
     def generate_url_for_template(template):
         url = template
-        for pattern, param_type in re.findall(
-            re.compile(r"((?:<\w+:(str|int|float|alpha|uuid)>)+)"),
-            template,
-        ):
+        for pattern, param_type in re.findall(re.compile(r"((?:<\w+:(str|int|float|alpha|uuid)>)+)"), url):
             value = TYPE_TO_GENERATOR_MAP.get(param_type)()
             url = url.replace(pattern, str(value), -1)
         return url
@@ -146,8 +143,7 @@ def app(request):
     if not CACHE:
         for target, method_name in TouchUp._registry:
             CACHE[method_name] = getattr(target, method_name)
-    app = Sanic(slugify.sub("-", request.node.name))
-    yield app
+    yield Sanic(slugify.sub("-", request.node.name))
     for target, method_name in TouchUp._registry:
         setattr(target, method_name, CACHE[method_name])
 
@@ -193,12 +189,7 @@ def run_multi(caplog):
 @pytest.fixture(scope="function")
 def message_in_records():
     def msg_in_log(records: List[LogRecord], msg: str):
-        error_captured = False
-        for record in records:
-            if msg in record.message:
-                error_captured = True
-                break
-        return error_captured
+        return any(msg in record.message for record in records)
 
     return msg_in_log
 

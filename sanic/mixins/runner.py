@@ -447,68 +447,68 @@ class RunnerMixin(metaclass=SanicMeta):
         return server_settings
 
     def motd(self, serve_location):
-        if self.config.MOTD:
-            mode = [f"{self.state.mode},"]
-            if self.state.fast:
-                mode.append("goin' fast")
-            if self.state.asgi:
-                mode.append("ASGI")
+        if not self.config.MOTD:
+            return
+
+        mode = [f"{self.state.mode},"]
+        if self.state.fast:
+            mode.append("goin' fast")
+        if self.state.asgi:
+            mode.append("ASGI")
+        else:
+            if self.state.workers == 1:
+                mode.append("single worker")
             else:
-                if self.state.workers == 1:
-                    mode.append("single worker")
-                else:
-                    mode.append(f"w/ {self.state.workers} workers")
+                mode.append(f"w/ {self.state.workers} workers")
 
-            display = {
-                "mode": " ".join(mode),
-                "server": self.state.server,
-                "python": platform.python_version(),
-                "platform": platform.platform(),
-            }
-            extra = {}
-            if self.config.AUTO_RELOAD:
-                reload_display = "enabled"
-                if self.state.reload_dirs:
-                    reload_display += ", ".join(
-                        [
-                            "",
-                            *(
-                                str(path.absolute())
-                                for path in self.state.reload_dirs
-                            ),
-                        ]
-                    )
-                display["auto-reload"] = reload_display
+        display = {
+            "mode": " ".join(mode),
+            "server": self.state.server,
+            "python": platform.python_version(),
+            "platform": platform.platform(),
+        }
+        extra = {}
+        if self.config.AUTO_RELOAD:
+            reload_display = "enabled"
+            if self.state.reload_dirs:
+                reload_display += ", ".join(
+                    [
+                        "",
+                        *(
+                            str(path.absolute())
+                            for path in self.state.reload_dirs
+                        ),
+                    ]
+                )
+            display["auto-reload"] = reload_display
 
-            packages = []
-            for package_name in SANIC_PACKAGES:
-                module_name = package_name.replace("-", "_")
-                try:
-                    module = import_module(module_name)
-                    packages.append(f"{package_name}=={module.__version__}")
-                except ImportError:
-                    ...
+        packages = []
+        for package_name in SANIC_PACKAGES:
+            module_name = package_name.replace("-", "_")
+            try:
+                module = import_module(module_name)
+                packages.append(f"{package_name}=={module.__version__}")
+            except ImportError:
+                ...
 
-            if packages:
-                display["packages"] = ", ".join(packages)
+        if packages:
+            display["packages"] = ", ".join(packages)
 
-            if self.config.MOTD_DISPLAY:
-                extra.update(self.config.MOTD_DISPLAY)
+        if self.config.MOTD_DISPLAY:
+            extra.update(self.config.MOTD_DISPLAY)
 
-            logo = (
-                get_logo(coffee=self.state.coffee)
-                if self.config.LOGO == "" or self.config.LOGO is True
-                else self.config.LOGO
-            )
+        logo = (
+            get_logo(coffee=self.state.coffee)
+            if self.config.LOGO == "" or self.config.LOGO is True
+            else self.config.LOGO
+        )
 
-            MOTD.output(logo, serve_location, display, extra)
+        MOTD.output(logo, serve_location, display, extra)
 
     @property
     def serve_location(self) -> str:
         serve_location = ""
-        proto = "http"
-        if self.state.ssl is not None:
-            proto = "https"
+        proto = "https" if self.state.ssl is not None else "http"
         if self.state.unix:
             serve_location = f"{self.state.unix} {proto}://..."
         elif self.state.sock:
@@ -619,11 +619,10 @@ class RunnerMixin(metaclass=SanicMeta):
             for server_info in app.state.server_info:
                 if server_info.stage is not ServerStage.SERVING:
                     app.state.primary = False
-                    handlers = [
+                    if handlers := [
                         *server_info.settings.pop("main_start", []),
                         *server_info.settings.pop("main_stop", []),
-                    ]
-                    if handlers:
+                    ]:
                         error_logger.warning(
                             f"Sanic found {len(handlers)} listener(s) on "
                             "secondary applications attached to the main "
